@@ -1,0 +1,26 @@
+# Username to use to access the ROS API
+# If not set the ROS_EXPORTER_USERNAME environment variable is
+# used, or `admin`.
+username: admin
+
+# Password for the user
+# If not set the ROS_EXPORTER_PASSWORD environment variable is
+# used, or `password`.
+password: password
+
+# If false the cerificate validation will be disabled
+ssl_validation: yes
+
+# Path to the CA certificate to use for validation
+# Can be set in the environment with ROS_EXPORTER_CA_CERT
+#
+# ca_cert: /path/to/your/ca/cert.pem
+
+# Request timeout in seconds
+timeout: 10
+
+# Dictionary of host specific configurations
+hosts: {}
+#  that-host:
+#    password: ANOTHER_PASSWORD
+#    address: 192.168.1.2
