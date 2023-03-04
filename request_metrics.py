@@ -15,6 +15,8 @@ class LatencyContextManager:
 
 class LatencyHistogram(Histogram):
     def __call__(self, labels):
+        # Use a private copy of the labels
+        labels = type(labels)(labels)
         return LatencyContextManager(lambda t: self.add(labels, t))
 
 class SimpleContextManager:
@@ -30,6 +32,8 @@ class SimpleContextManager:
 
 class InProgressGauge(Gauge):
     def __call__(self, labels):
+        # Use a private copy of the labels
+        labels = type(labels)(labels)
         return SimpleContextManager(lambda: self.inc(labels),
                                     lambda: self.dec(labels))
 
@@ -67,10 +71,11 @@ async def requests_metrics_middleware(request: web.Request, handler) -> web.Resp
     with requests_in_progress_gauge(labels), requests_latency_hist(labels):
         try:
             response = await handler(request)
+            labels["status"] = response.status
+            requests_counter.inc(labels)
         except web.HTTPException as e:
-            l = labels.copy()
-            l["status"] = e.status_code
-            requests_counter.inc(l)
+            labels["status"] = e.status_code
+            requests_counter.inc(labels)
             raise
         except ConnectionResetError:
             requests_connection_reset_counter.inc(labels)
@@ -81,5 +86,4 @@ async def requests_metrics_middleware(request: web.Request, handler) -> web.Resp
         except Exception:
             requests_exceptions_counter.inc(labels)
             raise
-    request_counter.inc(labels)
     return response
