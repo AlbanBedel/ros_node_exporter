@@ -52,7 +52,8 @@ requests_cancelled_counter = Counter(
 )
 
 requests_latency_hist = LatencyHistogram(
-    "requests_latency_seconds", "Request latency"
+    "requests_latency_seconds", "Request latency",
+    buckets = (1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 30.0)
 )
 
 requests_in_progress_gauge = InProgressGauge(

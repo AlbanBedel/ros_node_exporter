@@ -399,11 +399,13 @@ class RosExporterTarget:
 
 
 pull_latency_hist = LatencyHistogram(
-    "ros_exporter_pull_latency", "Latency pulling data from targets"
+    "ros_exporter_pull_latency", "Latency pulling data from targets",
+    buckets = (0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 30.0)
 )
 
 render_latency_hist = LatencyHistogram(
-    "ros_exporter_render_latency", "Latency pulling data from targets"
+    "ros_exporter_render_latency", "Latency pulling data from targets",
+    buckets = (0.0001, 0.0025, .005, 0.01, 0.1)
 )
 
 class RosExporter:
