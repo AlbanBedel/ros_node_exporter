@@ -11,7 +11,7 @@ import asyncio, ssl
 import aioprometheus
 from aioprometheus.renderer import render as prometheus_render
 # Some helpers to create metrics about the requests
-from request_metrics import request_metrics_middleware, LatencyHistogram
+from request_metrics import requests_metrics_middleware, LatencyHistogram
 # The usual suspects
 import os, re
 
@@ -482,7 +482,7 @@ class RosExporter:
 def app(*args, **kwargs):
     exporter = RosExporter(*args, **kwargs)
     app = web.Application()
-    app.middlewares.insert(0, request_metrics_middleware)
+    app.middlewares.insert(0, requests_metrics_middleware)
     app.add_routes(exporter.get_routes())
     return app
 
