@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # HTTP framework
-from aiohttp import ClientSession, BasicAuth
+from aiohttp import ClientSession, ClientTimeout, BasicAuth
 from aiohttp import ClientResponseError, ClientConnectionError
 from aiohttp import ServerTimeoutError
 from aiohttp import web, hdrs
@@ -74,7 +74,8 @@ class RosExporterTarget:
         self.config = config
         self.request_options = {
             'auth': BasicAuth(config.get('username'), config.get('password', '')),
-            'timeout': config.get('timeout', 10),
+            'timeout': ClientTimeout(total=config.get('total_timeout', 120),
+                                     sock_connect=config.get('connect_timeout', 10)),
             'raise_for_status': True,
         }
 
@@ -512,7 +513,8 @@ if __name__ == '__main__':
     parser.add_argument('--username')
     parser.add_argument('--password')
     parser.add_argument('--ca-cert')
-    parser.add_argument('--timeout', type=int)
+    parser.add_argument('--total-timeout', type=float)
+    parser.add_argument('--connect-timeout', type=float)
     parser.add_argument('--ssl-validation', action=argparse.BooleanOptionalAction)
 
     args = parser.parse_args()

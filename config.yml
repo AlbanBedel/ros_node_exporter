@@ -16,8 +16,11 @@ ssl_validation: yes
 #
 # ca_cert: /path/to/your/ca/cert.pem
 
-# Request timeout in seconds
-timeout: 10
+# Connection timeout, seconds
+connection_timeout: 10
+
+# Timeout for the whole request, including connection, in seconds
+total_timeout: 120
 
 # Dictionary of host specific configurations
 hosts: {}
