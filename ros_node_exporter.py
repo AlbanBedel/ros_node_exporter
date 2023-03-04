@@ -3,8 +3,10 @@
 # HTTP framework
 from aiohttp import ClientSession, BasicAuth
 from aiohttp import ClientResponseError, ClientConnectionError
+from aiohttp import ServerTimeoutError
 from aiohttp import web, hdrs
-from aiohttp.web import HTTPBadGateway, HTTPBadRequest
+from aiohttp.web import HTTPBadGateway, HTTPGatewayTimeout
+from aiohttp.web import HTTPBadRequest, HTTPInternalServerError
 import asyncio, ssl
 
 # Prometheus
@@ -452,15 +454,28 @@ class RosExporter:
         with pull_latency_hist(labels):
             try:
                 await target.pull_data()
+            except ServerTimeoutError as err:
+                text = str(err)
+                print(f'{name}: {text}')
+                raise HTTPGatewayTimeout(text=f'{text}\n')
             except ClientConnectionError as err:
                 text = str(err)
-                print(text)
+                print(f'{name}: {text}')
                 raise HTTPBadGateway(text=f'{text}\n')
             except ClientResponseError as err:
                 info = err.request_info
                 text = f'{info.method} {info.url} returned {err.status} - {err.message}'
-                print(text)
+                print(f'{name}: Response error: {text}')
                 raise HTTPBadGateway(text=f'{text}\n')
+            except asyncio.exceptions.TimeoutError:
+                text = 'Timed out getting data'
+                print(f'{name}: {text}')
+                raise HTTPGatewayTimeout(text=f'{text}\n')
+            except Exception as err:
+                text = str(err) or type(err)
+                text = f'Failed to get data: {text}'
+                print(f'{name}: {text}')
+                raise HTTPInternalServerError(text=f'{text}\n')
 
         # Render it according to the Accept header
         with render_latency_hist(labels):
