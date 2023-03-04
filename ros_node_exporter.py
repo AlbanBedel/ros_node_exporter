@@ -48,6 +48,11 @@ class GeneratorCounter(GeneratorCollector, aioprometheus.Counter):
         super().__init__(name, doc, const_labels, registry)
         self.generate = generator
 
+pull_latency_hist = LatencyHistogram(
+    "ros_exporter_pull_latency", "Latency pulling data from targets",
+    buckets = (0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 30.0)
+)
+
 class RosExporterTarget:
     # The routes we read to create our metrics
     # Each entry is a group that get pulled in parallel
@@ -109,8 +114,11 @@ class RosExporterTarget:
         url = f'{self.baseurl}/rest{route}'
         for p in (r for r in route.split('/') if len(r) > 0):
             ros_data = ros_data.setdefault(p, {})
-        async with client.get(url, **self.request_options) as resp:
-            ros_data['__content__'] = await resp.json()
+
+        labels = { 'target': self.target, 'route': route }
+        with pull_latency_hist(labels):
+            async with client.get(url, **self.request_options) as resp:
+                ros_data['__content__'] = await resp.json()
 
     async def pull_data(self):
         # Pull the data from all routes
@@ -401,11 +409,6 @@ class RosExporterTarget:
         return self.net_labels(iface), iface.get('tx-packet')
 
 
-pull_latency_hist = LatencyHistogram(
-    "ros_exporter_pull_latency", "Latency pulling data from targets",
-    buckets = (0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 30.0)
-)
-
 render_latency_hist = LatencyHistogram(
     "ros_exporter_render_latency", "Latency pulling data from targets",
     buckets = (0.0001, 0.0025, .005, 0.01, 0.1)
@@ -448,7 +451,7 @@ class RosExporter:
         return self.targets[target]
 
     async def get_target_metrics(self, name, req):
-        labels = { 'target': name }
+        labels = { 'target': name, 'route': '__all__' }
         target = self.get_target(name)
 
         # Pull the data for this target
